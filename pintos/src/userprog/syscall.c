@@ -122,7 +122,7 @@ syscall_handler (struct intr_frame *f ) //UNUSED)
     }
     case SYS_TELL:{
       int fd = *((int*)f->esp + 1);
-      sys_tell (fd);
+      f->eax = sys_tell (fd);
       break;
     }
     case SYS_CLOSE:{
@@ -185,8 +185,14 @@ int sys_open (const char *file){
 
 }
 
-void sys_seek(int fd, unsigned position){
-
+unsigned sys_tell(int fd){
+  lock_acquire (&mem_lock);
+  struct file *file = get_file(fd);
+  if (file == NULL){
+      lock_release (&mem_lock); return -1;}
+  unsigned next_byte = file_tell (file);
+  lock_release (&mem_lock);
+  return next_byte;
 }
 
 int sys_read (int fd, void *buffer, unsigned size){
@@ -205,9 +211,9 @@ int sys_filesize(int fd){
   return filesize;
 }
 
-void seek (int fd, unsigned position){
+void sys_seek (int fd, unsigned position){
   lock_acquire (&mem_lock);
-  struct file *seek_file = get_file (fd);
+  struct file *seek_file = get_file(fd);
   if (seek_file == NULL){
       lock_release (&mem_lock);
       return;
