@@ -243,14 +243,12 @@ int sys_exec (const char *cmd){
   struct process_info *child = get_child(pid);
   if (child == NULL)
     return PID_ERROR;
-
-  /* Wait until the new process is successfully loaded. */
-  while (!child->status)
+  while (!child->status){
     thread_yield ();
-
-  /* Return PID. */
-  if (child->status & 2)
+  }
+  if (child->status & 2){
     return PID_ERROR;
+  }
   return pid;
 }
 
