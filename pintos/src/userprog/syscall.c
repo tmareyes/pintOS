@@ -94,18 +94,27 @@ syscall_handler (struct intr_frame *f ) //UNUSED)
     case SYS_EXIT:
     {
       int num = *((int*)f->esp + 1);
+      if(!is_Valid(num)){
+        exit(-1);
+      }
       sys_exit(num);
       break;
     }
     case SYS_CREATE:{
       char * file = *((const char*)f->esp + 1);
       unsigned size = *((unsigned*)f->esp + 2);
+      if(!is_Valid(file) || !is_Valid(size)){
+        exit(-1);
+      }
       f->eax=sys_create (file, size);
       lock_release(&mem_lock);
       break;
     }
     case SYS_REMOVE:{
       char * file = *((const char*)f->esp + 1);
+      if(!is_Valid(file)){
+        exit(-1);
+      }
       f->eax= sys_remove(file);
       lock_release(&mem_lock);
       break;
@@ -113,42 +122,60 @@ syscall_handler (struct intr_frame *f ) //UNUSED)
     case SYS_FILESIZE:
     {
       int fd= *((int*)f->esp + 1);
+      if(!is_Valid(fd)){
+        exit(-1);
+      }
       f->eax = sys_filesize(fd);
       break;
     }
-    case SYS_WRITE:{
-    
-      int fd = *((int*)f->esp + 1);
-      void* buffer = (void*)(*((int*)f->esp + 2));
-      unsigned size = *((unsigned*)f->esp + 3);
-      //run the syscall, a function of your own making
-      //since this syscall returns a value, the return value should be stored in f->eax
+    case SYS_WRITE: {
+      int fd = *(int *)f->esp + 5;
+      void *buffer = *(char **)(f->esp + 6);
+      unsigned size = *(unsigned *)(f->esp + 7);
+      if(!is_Valid(fd) || !is_Valid(buffer) || !is_Valid(size)){
+        exit(-1);
+      }
       f->eax = sys_write(fd, buffer, size);
       break;
     }
     case SYS_SEEK:{
       int fd = *((int*)f->esp + 1);
       unsigned position = *((unsigned*)f->esp + 2);
+      if(!is_Valid(fd) || !is_Valid(position)){
+        exit(-1);
+      }
       sys_seek (fd, position);
       break;
     }
     case SYS_TELL:{
       int fd = *((int*)f->esp + 1);
+      if(!is_Valid(fd)){
+        exit(-1);
+      }
       f->eax = sys_tell (fd);
       break;
     }
     case SYS_CLOSE:{
       int fd = *((int*)f->esp + 1);
+      if(!is_Valid(fd)){
+        exit(-1);
+      }
       sys_close(fd);
       break;
     }
     case SYS_EXEC:{
       char * cmd = *((const char*)f->esp + 1);
+      if(!is_Valid(cmd)){
+        exit(-1);
+      }
       f->eax = sys_exec(cmd);
       break;
     }
     case SYS_OPEN:{
       char * file = *((const char*)f->esp + 1);
+      if(!is_Valid(file)){
+        exit(-1);
+      }
       sys_open(file);
       break;
     }
@@ -156,74 +183,13 @@ syscall_handler (struct intr_frame *f ) //UNUSED)
       int fd = *((int*)f->esp + 1);
       void* buffer = (void*)(*((int*)f->esp + 2));
       unsigned size = *((unsigned*)f->esp + 3);
+      if(!is_Valid(fd) || !is_Valid(buffer) || !is_Valid(size)){
+        exit(-1);
+      }
       sys_read (fd, buffer, size);
       break;
     }
     default:
-  }
-  thread_exit ();
-}
-syscall_handler (struct intr_frame *f) //UNUSED) 
-{
-  printf ("system call!\n");
-  int sys_call = (*(int *)f->esp);
-
-  if(!is_Valid(sys_call)){
-    sys_exit(-1);
-  }
-
-  switch(sys_call)
-  {
-    case SYS_HALT:{
-      shutdown_power_off();
-      break;
-    }
-    case SYS_WRITE: {
-      int fd = *(int *)f->esp + 5;
-      void *buffer = *(char **)(f->esp + 6);
-      unsigned size = *(unsigned *)(f->esp + 7);
-      f->eax = sys_write(fd, buffer, size);
-      break;
-    }
-    // case SYS_EXIT:
-    // {
-    //   int num = *((int*)f->esp + 1);
-    //   // read memory
-    //   sys_exit(num);
-    //   break;
-    // }
-    // case SYS_CREATE:{
-    //   char * file = *((const char*)f->esp + 1);
-    //   unsigned size = *((unsigned*)f->esp + 2);
-    //   f->eax=sys_create (file, size);
-    //   lock_release(&mem_lock);
-    //   break;
-    // }
-    // case SYS_REMOVE:{
-    //   char * file = *((const char*)f->esp + 1);
-    //   f->eax= sys_remove(file);
-    //   lock_release(&mem_lock);
-    //   break;
-    // }
-    // case SYS_FILESIZE:
-    // {
-    //   int fd= *((int*)f->esp + 1);
-    //   f->eax = sys_filesize(fd);
-    //   break;
-    // }
-    // case SYS_WRITE:{
-    
-    //   int fd = *((int*)f->esp + 1);
-    //   void* buffer = (void*)(*((int*)f->esp + 2));
-    //   unsigned size = *((unsigned*)f->esp + 3);
-    //   //run the syscall, a function of your own making
-    //   //since this syscall returns a value, the return value should be stored in f->eax
-    //   f->eax = sys_write(fd, buffer, size);
-    //   break;
-    // }
-    default: {
-      sys_exit(-1);
-    }
   }
   thread_exit ();
 }
@@ -270,9 +236,6 @@ struct file_descriptor *get_file_from_list(int fd) {
   
 }
 
-// int sys_filesize(int fd){
-
-// }
 int sys_exec (const char *cmd){
   lock_acquire(&mem_lock);
   int status= process_execute((const char*)cmd);
