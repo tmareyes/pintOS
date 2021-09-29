@@ -237,10 +237,21 @@ struct file_descriptor *get_file_from_list(int fd) {
 }
 
 int sys_exec (const char *cmd){
-  lock_acquire(&mem_lock);
-  int status= process_execute((const char*)cmd);
-  lock_release(&mem_lock);
-  return status;
+  pid_t pid = process_execute (cmd);
+  if (pid == PID_ERROR){ return pid; }
+
+  struct process_info *child = get_child(pid);
+  if (child == NULL)
+    return PID_ERROR;
+
+  /* Wait until the new process is successfully loaded. */
+  while (!child->status)
+    thread_yield ();
+
+  /* Return PID. */
+  if (child->status & 2)
+    return PID_ERROR;
+  return pid;
 }
 
 void sys_close(int fd){
@@ -286,4 +297,15 @@ void sys_seek (int fd, unsigned position){
   }
   file_seek (seek_file, position);
   lock_release (&mem_lock);
+}
+
+struct process_info * get_child (pid_t pid){
+  struct list *list = &process_current ()->file_list;
+  struct list_elem *list_e;
+  for (list_e = list_begin (list); list_e != list_end (list); list_e = list_next (list_e)){
+      struct process_info *child = list_entry (list_e, struct process_info, elem);
+      if (child->pid == pid)
+        return child;
+  }
+  return NULL;
 }
