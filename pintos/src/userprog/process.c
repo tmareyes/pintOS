@@ -91,10 +91,36 @@ process_wait (tid_t child_tid UNUSED)
   return -1;
 }
 
+struct process *process_current (void){
+  return &thread_current ()->process;
+}
+
 /* Free the current process's resources. */
 void
 process_exit (void)
 {
+  struct process *curr_p = process_current ();
+
+  struct list_elem *list_e;
+  for (list_e = list_begin (&curr_p->child_list); list_e != list_end (&curr_p->child_list);){
+      struct process_info *child = list_entry(list_e, struct process_info, elem);
+      if (!(child->status & 4)){
+          child->process->parent = NULL;
+          child->process->info = NULL;
+        }
+      list_e = list_next (list_e);
+      free (child);
+    }
+  if (curr_p->info != NULL)
+    curr_p->info->status |= 4;
+  file_close (curr_p->exec_file);
+  for (list_e = list_begin (&curr_p->file_list); list_e != list_end (&curr_p->file_list);){
+      struct process_file *filed = list_entry (list_e, struct process_file, elem);
+      list_e = list_next (list_e);
+      file_close (filed->file);
+      free (filed);
+  }
+
   struct thread *cur = thread_current ();
   uint32_t *pd;
 
@@ -130,6 +156,18 @@ process_activate (void)
   /* Set thread's kernel stack for use in processing
      interrupts. */
   tss_update ();
+}
+
+struct file * get_file (int fd){
+
+  struct list *list = &process_current ()->file_list;
+  struct list_elem *list_e;
+  for (list_e = list_begin (list); list_e != list_end (list); list_e = list_next (list_e)){
+      struct process_file *filed = list_entry (list_e, struct process_file, elem);
+      if (filed->fd == fd)
+        return filed->file;
+  }
+  return NULL;
 }
 
 /* We load ELF binaries.  The following definitions are taken

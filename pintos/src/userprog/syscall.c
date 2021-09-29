@@ -9,6 +9,13 @@
 #include "userprog/process.h"
 #include "userprog/pagedir.h"
 #include "threads/vaddr.h"
+#include "devices/input.h"
+#include "lib/kernel/list.h"
+#include "lib/user/syscall.h"
+#include "threads/malloc.h"
+#include <string.h>
+#include "filesys/file.h"
+#include "filesys/filesys.h"
 
 static void syscall_handler (struct intr_frame *);
 struct lock mem_lock;
@@ -75,7 +82,6 @@ syscall_handler (struct intr_frame *f ) //UNUSED)
     case SYS_EXIT:
     {
       int num = *((int*)f->esp + 1);
-      // read memory
       sys_exit(num);
       break;
     }
@@ -108,15 +114,50 @@ syscall_handler (struct intr_frame *f ) //UNUSED)
       f->eax = sys_write(fd, buffer, size);
       break;
     }
+    case SYS_SEEK:{
+      int fd = *((int*)f->esp + 1);
+      unsigned position = *((unsigned*)f->esp + 2);
+      sys_seek (fd, position);
+      break;
+    }
+    case SYS_TELL:{
+      int fd = *((int*)f->esp + 1);
+      sys_tell (fd);
+      break;
+    }
+    case SYS_CLOSE:{
+      int fd = *((int*)f->esp + 1);
+      sys_close(fd);
+      break;
+    }
+    case SYS_EXEC:{
+      char * cmd = *((const char*)f->esp + 1);
+      f->eax = sys_exec(cmd);
+      break;
+    }
+    case SYS_OPEN:{
+      char * file = *((const char*)f->esp + 1);
+      sys_open(file);
+      break;
+    }
+    case SYS_READ:{
+      int fd = *((int*)f->esp + 1);
+      void* buffer = (void*)(*((int*)f->esp + 2));
+      unsigned size = *((unsigned*)f->esp + 3);
+      sys_read (fd, buffer, size);
+      break;
+    }
     default:
     
   }
   thread_exit ();
 }
 
-void sys_exit(int exit_sys){
-
-  printf ("%s: exit(%d)\n", thread_current()->name, exit_sys);
+void sys_exit(int status){
+  if (process_current ()->info != NULL){
+    process_current()->info->exit_code = status;
+  }
+  printf ("%s: exit(%d)\n", thread_current()->name, status);
   thread_exit();
 }
 
@@ -130,6 +171,37 @@ bool sys_remove(const char *file){
   return filesys_remove(file);
 }
 
-int sys_filesize(int fd){
+int sys_exec (const char *cmd){
+  lock_acquire(&mem_lock);
+  int status= process_execute((const char*)cmd);
+  lock_release(&mem_lock);
+  return status;
+}
 
+void sys_close(int fd){
+
+}
+
+int sys_open (const char *file){
+
+}
+
+void sys_seek(int fd, unsigned position){
+
+}
+
+int sys_read (int fd, void *buffer, unsigned size){
+
+}
+
+int sys_filesize(int fd){
+  lock_acquire (&mem_lock);
+  struct file *file = get_file(fd);
+  if (file == NULL){
+      lock_release (&mem_lock);
+      return -1;
+  }
+  int filesize = file_length(file);
+  lock_release (&mem_lock);
+  return filesize;
 }
