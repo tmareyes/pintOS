@@ -1,6 +1,10 @@
 #ifndef THREADS_THREAD_H
 #define THREADS_THREAD_H
+<<<<<<< Updated upstream
 
+=======
+#define USERPROG 1
+>>>>>>> Stashed changes
 #include <debug.h>
 #include <list.h>
 #include <stdint.h>
