@@ -3,6 +3,7 @@
 
 #include "threads/thread.h"
 
+tid_t process_execute(const char *file_name);
 
 struct process{
     struct process *parent;         
@@ -23,9 +24,7 @@ struct process_file{
     int fd;        
     struct file *file;              
     struct list_elem elem;          
-  };
-
-tid_t process_execute (const char *file_name);
+};
 
 int process_wait (tid_t);
 struct process *process_current (void);
