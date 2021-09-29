@@ -1,13 +1,20 @@
 #ifndef THREADS_THREAD_H
 #define THREADS_THREAD_H
+<<<<<<< HEAD
 <<<<<<< Updated upstream
 
 =======
 #define USERPROG 1
 >>>>>>> Stashed changes
+=======
+#define USERPROG
+>>>>>>> 9b013c2ca1a39993c8f479cacb6fcd1a7d8191e8
 #include <debug.h>
 #include <list.h>
 #include <stdint.h>
+#ifdef USERPROG
+#include "userprog/process.h"
+#endif
 
 /* States in a thread's life cycle. */
 enum thread_status
@@ -97,10 +104,11 @@ struct thread
     /* Shared between thread.c and synch.c. */
     struct list_elem elem;              /* List element. */
 
-#ifdef USERPROG
+// #ifdef USERPROG
     /* Owned by userprog/process.c. */
+    struct process process; 
     uint32_t *pagedir;                  /* Page directory. */
-#endif
+// #endif
 
     /* Owned by thread.c. */
     unsigned magic;                     /* Detects stack overflow. */

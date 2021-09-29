@@ -1,4 +1,3 @@
-<<<<<<< Updated upstream
 #include "userprog/process.h"
 #include <debug.h>
 #include <inttypes.h>
@@ -465,6 +464,8 @@ install_page (void *upage, void *kpage, bool writable)
           && pagedir_set_page (t->pagedir, upage, kpage, writable));
 }
 =======
+=======
+>>>>>>> 9b013c2ca1a39993c8f479cacb6fcd1a7d8191e8
 #include "userprog/process.h"
 #include <debug.h>
 #include <inttypes.h>
@@ -484,8 +485,11 @@ install_page (void *upage, void *kpage, bool writable)
 #include "threads/palloc.h"
 #include "threads/thread.h"
 #include "threads/vaddr.h"
+<<<<<<< HEAD
 #include "threads/malloc.h"
 #include "lib/user/syscall.h"
+=======
+>>>>>>> 9b013c2ca1a39993c8f479cacb6fcd1a7d8191e8
 
 static thread_func start_process NO_RETURN;
 static bool load (const char *cmdline, void (**eip) (void), void **esp);
@@ -581,6 +585,28 @@ process_wait (tid_t child_tid)
 void
 process_exit (void)
 {
+  struct process *curr_p = process_current ();
+
+  struct list_elem *list_e;
+  for (list_e = list_begin (&curr_p->child_list); list_e != list_end (&curr_p->child_list);){
+      struct process_info *child = list_entry(list_e, struct process_info, elem);
+      if (!(child->status & 4)){
+          child->process->parent = NULL;
+          child->process->info = NULL;
+        }
+      list_e = list_next (list_e);
+      free (child);
+    }
+  if (curr_p->info != NULL)
+    curr_p->info->status |= 4;
+  file_close (curr_p->exec_file);
+  for (list_e = list_begin (&curr_p->file_list); list_e != list_end (&curr_p->file_list);){
+      struct process_file *filed = list_entry (list_e, struct process_file, elem);
+      list_e = list_next (list_e);
+      file_close (filed->file);
+      free (filed);
+  }
+
   struct thread *cur = thread_current ();
   uint32_t *pd;
 
@@ -616,6 +642,18 @@ process_activate (void)
   /* Set thread's kernel stack for use in processing
      interrupts. */
   tss_update ();
+}
+
+struct file * get_file (int fd){
+
+  struct list *list = &process_current ()->file_list;
+  struct list_elem *list_e;
+  for (list_e = list_begin (list); list_e != list_end (list); list_e = list_next (list_e)){
+      struct process_file *filed = list_entry (list_e, struct process_file, elem);
+      if (filed->fd == fd)
+        return filed->file;
+  }
+  return NULL;
 }
 
 /* We load ELF binaries.  The following definitions are taken
@@ -1025,5 +1063,3 @@ install_page (void *upage, void *kpage, bool writable)
      address, then map our page there. */
   return (pagedir_get_page (t->pagedir, upage) == NULL
           && pagedir_set_page (t->pagedir, upage, kpage, writable));
-}
->>>>>>> Stashed changes
