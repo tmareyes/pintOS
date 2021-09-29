@@ -204,3 +204,14 @@ int sys_filesize(int fd){
   lock_release (&mem_lock);
   return filesize;
 }
+
+void seek (int fd, unsigned position){
+  lock_acquire (&mem_lock);
+  struct file *seek_file = get_file (fd);
+  if (seek_file == NULL){
+      lock_release (&mem_lock);
+      return;
+  }
+  file_seek (seek_file, position);
+  lock_release (&mem_lock);
+}

@@ -12,4 +12,5 @@ int sys_read (int fd, void *buffer, unsigned size);
 int sys_open (const char *file);
 void sys_close(int fd);
 int sys_exec (const char *cmd);
+void seek (int fd, unsigned position);
 #endif /* userprog/syscall.h */
