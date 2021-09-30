@@ -104,10 +104,8 @@ start_process (void *file_name_)
 int
 process_wait (tid_t child_tid) 
 {
-  while(1) {
-    thread_yield();
-    break;
-  }
+  sema_down(&thread_current()->wait_sema);
+  return -1;
 }
 
 struct process *process_current (void) {

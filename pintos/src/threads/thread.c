@@ -166,6 +166,7 @@ tid_t
 thread_create (const char *name, int priority,
                thread_func *function, void *aux) 
 {
+  struct thread *parent;
   struct thread *t;
   struct kernel_thread_frame *kf;
   struct switch_entry_frame *ef;
@@ -175,6 +176,8 @@ thread_create (const char *name, int priority,
 
   ASSERT (function != NULL);
 
+  parent = thread_current ();
+
   /* Allocate thread. */
   t = palloc_get_page (PAL_ZERO);
   if (t == NULL)
@@ -183,6 +186,8 @@ thread_create (const char *name, int priority,
   /* Initialize thread. */
   init_thread (t, name, priority);
   tid = t->tid = allocate_tid ();
+
+  t->parent = parent;
 
   /* Prepare thread for first run by initializing its stack.
      Do this atomically so intermediate values for the 'stack' 
@@ -289,6 +294,9 @@ void
 thread_exit (void) 
 {
   ASSERT (!intr_context ());
+
+  /* unblock parent thread */
+  sema_up(&thread_current()->parent->wait_sema);
 
 #ifdef USERPROG
   process_exit ();
