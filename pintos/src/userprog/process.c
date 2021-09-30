@@ -110,6 +110,10 @@ process_wait (tid_t child_tid)
   }
 }
 
+struct process *process_current () {
+  return NULL; /* TODO: Implement function */
+}
+
 /* Free the current process's resources. */
 void
 process_exit (void)
@@ -592,3 +596,4 @@ install_page (void *upage, void *kpage, bool writable)
      address, then map our page there. */
   return (pagedir_get_page (t->pagedir, upage) == NULL
           && pagedir_set_page (t->pagedir, upage, kpage, writable));
+}
