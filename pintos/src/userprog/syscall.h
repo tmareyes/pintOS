@@ -14,4 +14,5 @@ void sys_close(int fd);
 int sys_exec (const char *cmd);
 void sys_seek (int fd, unsigned position);
 unsigned sys_tell(int fd);
+int sys_write(int fd, const void *buffer, unsigned size);
 #endif /* userprog/syscall.h */

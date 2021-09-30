@@ -37,7 +37,7 @@ process_execute (const char *file_name)
 
   tid_t tid;
 
-  printf("I have reached process_execute");
+  // printf("I have reached process_execute");
 
   /* Make a copy of FILE_NAME.
      Otherwise there's a race between the caller and load(). */
@@ -151,18 +151,6 @@ process_activate (void)
   tss_update ();
 }
 
-// struct file * get_file (int fd){
-
-//   struct list *list = &process_current ()->file_list;
-//   struct list_elem *list_e;
-//   for (list_e = list_begin (list); list_e != list_end (list); list_e = list_next (list_e)){
-//       struct process_file *filed = list_entry (list_e, struct process_file, elem);
-//       if (filed->fd == fd)
-//         return filed->file;
-//   }
-//   return NULL;
-// }
-
 /* We load ELF binaries.  The following definitions are taken
    from the ELF specification, [ELF1], more-or-less verbatim.  */
 
@@ -488,7 +476,6 @@ setup_stack (void **esp, char *file_name)
   char *exec_name;
   char *saveptr;
 
-
   /* Obtain the executable name */
   file_name_temp = (char *)malloc(strlen(file_name) + 1);
   strlcpy(file_name_temp, file_name, strlen(file_name) + 1);
@@ -498,8 +485,9 @@ setup_stack (void **esp, char *file_name)
   if (kpage != NULL) 
     {
       success = install_page (((uint8_t *) PHYS_BASE) - PGSIZE, kpage, true);
-      if (success)
+      if (success) {
         *esp = PHYS_BASE;
+      }
       else
         palloc_free_page (kpage);
     }
@@ -507,12 +495,11 @@ setup_stack (void **esp, char *file_name)
   int argc = 0;
   char *token;
   char *save_ptr;
-
   for (token = strtok_r (file_name_temp, " ", &save_ptr); token != NULL; token = strtok_r (NULL, " ", &save_ptr)) {
     argc++;
   }
 
-  argv = (char **)malloc(argc * sizeof(char *) + 1);
+  argv = (char **)malloc(argc * 4 + 1);
 
   int i = 0;
   for (token = strtok_r (file_name_temp, " ", &save_ptr); token != NULL; token = strtok_r (NULL, " ", &save_ptr)) {
@@ -531,13 +518,12 @@ setup_stack (void **esp, char *file_name)
     *esp -= sizeof(char *);
     memcpy(*esp, &argv[i], sizeof(char*));
   }
-
   //might be wrong
   char **ptr = *esp;
-  *esp -= sizeof(char **);
+  *esp -= 4;
   memcpy(*esp, &ptr, sizeof(char**));
 
-  *esp -= sizeof(int);
+  *esp -= 4;
   memcpy(*esp, &argc, sizeof(int));
 
   *esp -= sizeof(void*);
@@ -545,10 +531,8 @@ setup_stack (void **esp, char *file_name)
 
   free(argv);
   free(file_name_temp);
-
-  // hexdump(*esp, *esp, PHYS_BASE - *esp, true);
-
-  
+        
+  hex_dump((uintptr_t) *esp, *esp, PHYS_BASE - *esp, true);
   return success;
 }
 
