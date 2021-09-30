@@ -221,8 +221,9 @@ load (const char *file_name, void (**eip) (void), void **esp)
     goto done;
   process_activate ();
 
-  /* Open executable file. */
-  file = filesys_open (file_name);
+  /* Open executable file. Use the thread name instead of the filename, 
+   * since the filename has args */
+  file = filesys_open (t->name);
   if (file == NULL) 
     {
       printf ("load: %s: open failed\n", file_name);
