@@ -110,8 +110,8 @@ process_wait (tid_t child_tid)
   }
 }
 
-struct process *process_current () {
-  return NULL; /* TODO: Implement function */
+struct process *process_current (void) {
+  return &thread_current ()->process;
 }
 
 /* Free the current process's resources. */
