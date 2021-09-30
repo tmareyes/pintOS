@@ -499,7 +499,7 @@ setup_stack (void **esp, char *file_name)
     argc++;
   }
 
-  argv = (char **)malloc(argc * 4 + 1);
+  argv = (char **)malloc(argc * sizeof(char *) + 1);
 
   int i = 0;
   for (token = strtok_r (file_name_temp, " ", &save_ptr); token != NULL; token = strtok_r (NULL, " ", &save_ptr)) {
@@ -520,7 +520,7 @@ setup_stack (void **esp, char *file_name)
   }
   //might be wrong
   char **ptr = *esp;
-  *esp -= 4;
+  *esp -= sizeof(char **);
   memcpy(*esp, &ptr, sizeof(char**));
 
   *esp -= 4;
