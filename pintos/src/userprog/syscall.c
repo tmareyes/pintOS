@@ -9,7 +9,7 @@
 #include "userprog/process.h"
 #include "userprog/pagedir.h"
 #include "threads/vaddr.h"
-#include "unistd.h"
+// #include <unistd.h>
 
 #define STDIN_FILENO 0
 #define STDOUT_FILENO 1
@@ -75,14 +75,13 @@ static bool write_mem(uint8_t *udst, uint8_t byte){
 }
 
 static void
-syscall_handler (struct intr_frame *f ) //UNUSED) 
+syscall_handler (struct intr_frame *f)
 {
-  // printf ("system call!\n");
   uint32_t *esp;
   esp= f->esp;
 
   if(!is_Valid(esp)){
-    exit(-1);
+    sys_exit(-1);
   }
 
   switch(*(int*)f->esp)
@@ -95,7 +94,7 @@ syscall_handler (struct intr_frame *f ) //UNUSED)
     {
       int num = *((int*)f->esp + 1);
       if(!is_Valid(num)){
-        exit(-1);
+        sys_exit(-1);
       }
       sys_exit(num);
       break;
@@ -104,7 +103,7 @@ syscall_handler (struct intr_frame *f ) //UNUSED)
       char * file = *((const char*)f->esp + 1);
       unsigned size = *((unsigned*)f->esp + 2);
       if(!is_Valid(file) || !is_Valid(size)){
-        exit(-1);
+        sys_exit(-1);
       }
       f->eax=sys_create (file, size);
       lock_release(&mem_lock);
@@ -113,7 +112,7 @@ syscall_handler (struct intr_frame *f ) //UNUSED)
     case SYS_REMOVE:{
       char * file = *((const char*)f->esp + 1);
       if(!is_Valid(file)){
-        exit(-1);
+        sys_exit(-1);
       }
       f->eax= sys_remove(file);
       lock_release(&mem_lock);
@@ -123,7 +122,7 @@ syscall_handler (struct intr_frame *f ) //UNUSED)
     {
       int fd= *((int*)f->esp + 1);
       if(!is_Valid(fd)){
-        exit(-1);
+        sys_exit(-1);
       }
       f->eax = sys_filesize(fd);
       break;
@@ -133,7 +132,7 @@ syscall_handler (struct intr_frame *f ) //UNUSED)
       void *buffer = *(char **)(f->esp + 6);
       unsigned size = *(unsigned *)(f->esp + 7);
       if(!is_Valid(fd) || !is_Valid(buffer) || !is_Valid(size)){
-        exit(-1);
+        sys_exit(-1);
       }
       f->eax = sys_write(fd, buffer, size);
       break;
@@ -142,7 +141,7 @@ syscall_handler (struct intr_frame *f ) //UNUSED)
       int fd = *((int*)f->esp + 1);
       unsigned position = *((unsigned*)f->esp + 2);
       if(!is_Valid(fd) || !is_Valid(position)){
-        exit(-1);
+        sys_exit(-1);
       }
       sys_seek (fd, position);
       break;
@@ -150,7 +149,7 @@ syscall_handler (struct intr_frame *f ) //UNUSED)
     case SYS_TELL:{
       int fd = *((int*)f->esp + 1);
       if(!is_Valid(fd)){
-        exit(-1);
+        sys_exit(-1);
       }
       f->eax = sys_tell (fd);
       break;
@@ -158,7 +157,7 @@ syscall_handler (struct intr_frame *f ) //UNUSED)
     case SYS_CLOSE:{
       int fd = *((int*)f->esp + 1);
       if(!is_Valid(fd)){
-        exit(-1);
+        sys_exit(-1);
       }
       sys_close(fd);
       break;
@@ -166,7 +165,7 @@ syscall_handler (struct intr_frame *f ) //UNUSED)
     case SYS_EXEC:{
       char * cmd = *((const char*)f->esp + 1);
       if(!is_Valid(cmd)){
-        exit(-1);
+        sys_exit(-1);
       }
       f->eax = sys_exec(cmd);
       break;
@@ -174,7 +173,7 @@ syscall_handler (struct intr_frame *f ) //UNUSED)
     case SYS_OPEN:{
       char * file = *((const char*)f->esp + 1);
       if(!is_Valid(file)){
-        exit(-1);
+        sys_exit(-1);
       }
       sys_open(file);
       break;
@@ -184,12 +183,13 @@ syscall_handler (struct intr_frame *f ) //UNUSED)
       void* buffer = (void*)(*((int*)f->esp + 2));
       unsigned size = *((unsigned*)f->esp + 3);
       if(!is_Valid(fd) || !is_Valid(buffer) || !is_Valid(size)){
-        exit(-1);
+        sys_exit(-1);
       }
       sys_read (fd, buffer, size);
       break;
     }
-    default:
+    default:{
+    }
   }
   thread_exit ();
 }
@@ -211,6 +211,11 @@ bool sys_remove(const char *file){
   return filesys_remove(file);
 }
 
+struct file_descriptor *get_file_from_list(int fd) {
+  /* TODO: implement function */
+  return NULL;
+}
+
 int sys_write(int fd, const void *buffer, unsigned size) {
   printf("I AM IN WRITE");
   struct file_descriptor *fd_struct;
@@ -230,10 +235,6 @@ int sys_write(int fd, const void *buffer, unsigned size) {
 
   lock_release(&mem_lock);
   return bytes_written;
-}
-
-struct file_descriptor *get_file_from_list(int fd) {
-  
 }
 
 int sys_exec (const char *cmd){

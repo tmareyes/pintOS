@@ -4,9 +4,6 @@
 #include <debug.h>
 #include <list.h>
 #include <stdint.h>
-#ifdef USERPROG
-#include "userprog/process.h"
-#endif
 
 /* States in a thread's life cycle. */
 enum thread_status
@@ -26,6 +23,33 @@ typedef int tid_t;
 #define PRI_MIN 0                       /* Lowest priority. */
 #define PRI_DEFAULT 31                  /* Default priority. */
 #define PRI_MAX 63                      /* Highest priority. */
+
+/* process definitions */
+typedef int pid_t;
+#define PID_ERROR (pid_t -1) 
+
+struct process{
+    struct process *parent;         
+    struct file *exec_file;         
+    struct list child_list;          
+    struct list file_list;          
+    struct process_info *info;     
+    int fd_next;
+    pid_t pid;                     
+};
+struct process_info{
+    struct process *process;        
+    int status;                      
+    int exit_code;                  
+    bool wait;                 
+    struct list_elem elem;  
+    pid_t pid;        
+};
+struct process_file{
+    int fd;        
+    struct file *file;              
+    struct list_elem elem;          
+};
 
 /* A kernel thread or user process.
 
